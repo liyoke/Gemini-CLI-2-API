@@ -12,8 +12,8 @@
  * This version includes all features and bug fixes, designed to be robust, flexible, and easy to monitor through a comprehensive and controllable logging system.
  *
  * 主要功能 / Key Features:
- * - OpenAI & Gemini & Claude 多重兼容性：无缝桥接使用 OpenAI API 格式的客户端与 Google Gemini API。支持原生 Gemini API (`/v1beta`) 和 OpenAI 兼容 (`/v1`) 端点。
- *   OpenAI & Gemini & Claude Dual Compatibility: Seamlessly bridges clients using the OpenAI API format with the Google Gemini API. Supports both native Gemini API (`/v1beta`) and OpenAI-compatible (`/v1`) endpoints.
+ * - OpenAI & Gemini 多重兼容性：无缝桥接使用 OpenAI API 格式的客户端与 Google Gemini API。支持原生 Gemini API (`/v1beta`) 和 OpenAI 兼容 (`/v1`) 端点。
+ *   OpenAI & Gemini Dual Compatibility: Seamlessly bridges clients using the OpenAI API format with the Google Gemini API. Supports both native Gemini API (`/v1beta`) and OpenAI-compatible (`/v1`) endpoints.
  *
  * - 强大的身份验证管理：支持多种身份验证方法，包括通过 Base64 字符串、文件路径或自动发现本地凭据的 OAuth 2.0 配置。能够自动刷新过期令牌以确保服务持续运行。
  *   Robust Authentication Management: Supports multiple authentication methods, including OAuth 2.0 configuration via Base64 strings, file paths, or automatic discovery of local credentials. Capable of automatically refreshing expired tokens to ensure continuous service operation.
@@ -47,9 +47,6 @@
  * OpenAI 提供商 / OpenAI Provider:
  * node src/api-server.js --model-provider openai-custom --openai-api-key sk-xxx --openai-base-url https://api.openai.com/v1
  *
- * Claude 提供商 / Claude Provider:
- * node src/api-server.js --model-provider claude-custom --claude-api-key sk-ant-xxx --claude-base-url https://api.anthropic.com
- *
  * Gemini 提供商（使用 Base64 凭据的 OAuth）/ Gemini Provider (OAuth with Base64 credentials):
  * node src/api-server.js --model-provider gemini-cli --gemini-oauth-creds-base64 eyJ0eXBlIjoi... --project-id your-project-id
  *
@@ -80,15 +77,11 @@
  * --host <address>                    服务器监听地址 / Server listening address (default: localhost)
  * --port <number>                     服务器监听端口 / Server listening port (default: 3000)
  * --api-key <key>                     身份验证所需的 API 密钥 / Required API key for authentication (default: 123456)
- * --model-provider <provider>         AI 模型提供商 / AI model provider: openai-custom, claude-custom, gemini-cli, kiro-api
+ * --model-provider <provider>         AI 模型提供商 / AI model provider: openai-custom, gemini-cli
  * --openai-api-key <key>             OpenAI API 密钥 / OpenAI API key (for openai-custom provider)
  * --openai-base-url <url>            OpenAI API 基础 URL / OpenAI API base URL (for openai-custom provider)
- * --claude-api-key <key>             Claude API 密钥 / Claude API key (for claude-custom provider)
- * --claude-base-url <url>            Claude API 基础 URL / Claude API base URL (for claude-custom provider)
  * --gemini-oauth-creds-base64 <b64>  Gemini OAuth 凭据的 Base64 字符串 / Gemini OAuth credentials as Base64 string
  * --gemini-oauth-creds-file <path>   Gemini OAuth 凭据 JSON 文件路径 / Path to Gemini OAuth credentials JSON file
- * --kiro-oauth-creds-base64 <b64>    Kiro OAuth 凭据的 Base64 字符串 / Kiro OAuth credentials as Base64 string
- * --kiro-oauth-creds-file <path>     Kiro OAuth 凭据 JSON 文件路径 / Path to Kiro OAuth credentials JSON file
  * --project-id <id>                  Google Cloud 项目 ID / Google Cloud Project ID (for gemini-cli provider)
  * --system-prompt-file <path>        系统提示文件路径 / Path to system prompt file (default: input_system_prompt.txt)
  * --system-prompt-mode <mode>        系统提示模式 / System prompt mode: overwrite or append (default: overwrite)
@@ -154,12 +147,8 @@ async function initializeConfig(
       MODEL_PROVIDER: MODEL_PROVIDER.GEMINI_CLI,
       OPENAI_API_KEY: null,
       OPENAI_BASE_URL: null,
-      CLAUDE_API_KEY: null,
-      CLAUDE_BASE_URL: null,
       GEMINI_OAUTH_CREDS_BASE64: null,
       GEMINI_OAUTH_CREDS_FILE_PATH: null,
-      KIRO_OAUTH_CREDS_BASE64: null,
-      KIRO_OAUTH_CREDS_FILE_PATH: null,
       PROJECT_ID: null,
       SYSTEM_PROMPT_FILE_PATH: INPUT_SYSTEM_PROMPT_FILE, // Default value
       SYSTEM_PROMPT_MODE: "overwrite",
@@ -228,27 +217,7 @@ async function initializeConfig(
           `[Config Warning] --openai-base-url flag requires a value.`,
         );
       }
-    } else if (args[i] === "--claude-api-key") {
-      if (i + 1 < args.length) {
-        currentConfig.CLAUDE_API_KEY = args[i + 1];
-        i++;
-      } else {
-        console.warn(
-          `[Config Warning] --claude-api-key flag requires a value.`,
-        );
-      }
-    } else if (args[i] === "--claude-base-url") {
-      if (i + 1 < args.length) {
-        currentConfig.CLAUDE_BASE_URL = args[i + 1];
-        i++;
-      } else {
-        console.warn(
-          `[Config Warning] --claude-base-url flag requires a value.`,
-        );
-      }
-    }
-    // Gemini-specific arguments
-    else if (args[i] === "--gemini-oauth-creds-base64") {
+    } else if (args[i] === "--gemini-oauth-creds-base64") {
       if (i + 1 < args.length) {
         currentConfig.GEMINI_OAUTH_CREDS_BASE64 = args[i + 1];
         i++;
@@ -312,24 +281,6 @@ async function initializeConfig(
       } else {
         console.warn(
           `[Config Warning] --prompt-log-base-name flag requires a value.`,
-        );
-      }
-    } else if (args[i] === "--kiro-oauth-creds-base64") {
-      if (i + 1 < args.length) {
-        currentConfig.KIRO_OAUTH_CREDS_BASE64 = args[i + 1];
-        i++;
-      } else {
-        console.warn(
-          `[Config Warning] --kiro-oauth-creds-base64 flag requires a value.`,
-        );
-      }
-    } else if (args[i] === "--kiro-oauth-creds-file") {
-      if (i + 1 < args.length) {
-        currentConfig.KIRO_OAUTH_CREDS_FILE_PATH = args[i + 1];
-        i++;
-      } else {
-        console.warn(
-          `[Config Warning] --kiro-oauth-creds-file flag requires a value.`,
         );
       }
     }
@@ -396,12 +347,7 @@ async function getSystemPromptFileContent(filePath) {
 async function initApiService(config) {
   // Make getApiService exportable and accept config
   // Initialize all known service adapters at startup
-  const providers = [
-    MODEL_PROVIDER.OPENAI_CUSTOM,
-    MODEL_PROVIDER.GEMINI_CLI,
-    MODEL_PROVIDER.CLAUDE_CUSTOM,
-    MODEL_PROVIDER.KIRO_API,
-  ];
+  const providers = [MODEL_PROVIDER.OPENAI_CUSTOM, MODEL_PROVIDER.GEMINI_CLI];
   for (const provider of providers) {
     try {
       getServiceAdapter({ ...config, MODEL_PROVIDER: provider });
@@ -526,16 +472,6 @@ function createRequestHandler(config) {
             PROMPT_LOG_FILENAME,
           );
         }
-        if (path === "/v1/messages") {
-          return await handleContentGenerationRequest(
-            req,
-            res,
-            apiService,
-            ENDPOINT_TYPE.CLAUDE_MESSAGE,
-            currentConfig,
-            PROMPT_LOG_FILENAME,
-          );
-        }
       }
 
       // Fallback for unmatched routes
@@ -563,20 +499,11 @@ async function startServer() {
         `  OpenAI API Key: ${CONFIG.OPENAI_API_KEY ? "******" : "Not Set"}`,
       );
       console.log(`  OpenAI Base URL: ${CONFIG.OPENAI_BASE_URL}`);
-    } else if (CONFIG.MODEL_PROVIDER === MODEL_PROVIDER.CLAUDE_CUSTOM) {
-      console.log(
-        `  Claude API Key: ${CONFIG.CLAUDE_API_KEY ? "******" : "Not Set"}`,
-      );
-      console.log(`  Claude Base URL: ${CONFIG.CLAUDE_BASE_URL}`);
     } else if (CONFIG.MODEL_PROVIDER === MODEL_PROVIDER.GEMINI_CLI) {
       console.log(
         `  Gemini OAuth Creds File Path: ${CONFIG.GEMINI_OAUTH_CREDS_FILE_PATH || "Default"}`,
       );
       console.log(`  Project ID: ${CONFIG.PROJECT_ID || "Auto-discovered"}`);
-    } else if (CONFIG.MODEL_PROVIDER === MODEL_PROVIDER.KIRO_API) {
-      console.log(
-        `  Kiro OAuth Creds File Path: ${CONFIG.KIRO_OAUTH_CREDS_FILE_PATH || "Default"}`,
-      );
     }
     console.log(
       `  System Prompt File: ${CONFIG.SYSTEM_PROMPT_FILE_PATH || "Default"}`,
@@ -597,7 +524,6 @@ async function startServer() {
     console.log(
       `  • Gemini-compatible: /v1beta/models, /v1beta/models/{model}:generateContent`,
     );
-    console.log(`  • Claude-compatible: /v1/messages`);
     console.log(`  • Health check: /health`);
   });
   return server; // Return the server instance for testing purposes

@@ -2,7 +2,7 @@
 
 # Gemini-CLI-2-API 🚀
 
-**一个能将多种大模型 API（Gemini, OpenAI, Claude...）统一封装为本地 OpenAI 兼容接口的强大代理。**
+**一个能将多种大模型 API（Gemini, OpenAI...）统一封装为本地 OpenAI 兼容接口的强大代理。**
 
 </div>
 
@@ -15,15 +15,14 @@
 
 </div>
 
-> `GeminiCli2API` 是一个多功能、轻量化的 API 代理，旨在提供极致的灵活性和易用性。它通过一个 Node.js HTTP 服务器，将 Google Gemini CLI 授权登录、OpenAI、Claude、Kiro 等多种后端 API 统一转换为标准的 OpenAI 格式接口。项目采用现代化的模块化架构，支持策略模式和适配器模式，具备完整的测试覆盖，开箱即用，`npm install` 后即可直接运行。您只需在配置文件中轻松切换模型服务商，就能让任何兼容 OpenAI 的客户端或应用，通过同一个 API 地址，无缝地使用不同的大模型能力，彻底摆脱为不同服务维护多套配置和处理接口不兼容问题的烦恼。
+> `GeminiCli2API` 是一个多功能、轻量化的 API 代理，旨在提供极致的灵活性和易用性。它通过一个 Node.js HTTP 服务器，将 Google Gemini CLI 授权登录、OpenAI 等多种后端 API 统一转换为标准的 OpenAI 格式接口。项目采用现代化的模块化架构，支持策略模式和适配器模式，具备完整的测试覆盖，开箱即用，`npm install` 后即可直接运行。您只需在配置文件中轻松切换模型服务商，就能让任何兼容 OpenAI 的客户端或应用，通过同一个 API 地址，无缝地使用不同的大模型能力，彻底摆脱为不同服务维护多套配置和处理接口不兼容问题的烦恼。
 
 ---
 
 ## 💡 核心优势
 
-*   ✅ **多模型统一接入**：一个接口，通吃 Gemini、OpenAI、Claude 等多种模型。通过简单的启动参数或请求头，即可在不同模型服务商之间自由切换。
+*   ✅ **多模型统一接入**：一个接口，通吃 Gemini、OpenAI 等多种模型。通过简单的启动参数或请求头，即可在不同模型服务商之间自由切换。
 *   ✅ **突破官方限制**：通过支持 Gemini CLI 的 OAuth 授权方式，有效绕过官方免费 API 的速率和配额限制，让您享受更高的请求额度和使用频率。
-*   ✅ **突破客户端限制**：Kiro API 模式下支持免费使用Claude Sonnet 4 模型。
 *   ✅ **无缝兼容 OpenAI**：提供与 OpenAI API 完全兼容的接口，让您现有的工具链和客户端（如 LobeChat, NextChat 等）可以零成本接入所有支持的模型。
 *   ✅ **增强的可控性**：通过强大的日志功能，可以捕获并记录所有请求的提示词（Prompts），便于审计、调试和构建私有数据集。
 *   ✅ **极易扩展**：得益于全新的模块化和策略模式设计，添加一个新的模型服务商变得前所未有的简单。
@@ -39,10 +38,10 @@
     *   作为项目的总指挥，它负责启动和管理整个 HTTP 服务，解析命令行参数，并加载所有配置。
 
 *   **`src/adapter.js`**: 🔌 **服务适配器**
-    *   采用经典的适配器模式，为每种 AI 服务（Gemini, OpenAI, Claude, Kiro）创建一个统一的接口。无论后端服务如何变化，对主服务来说，调用方式都是一致的。
+    *   采用经典的适配器模式，为每种 AI 服务（Gemini, OpenAI）创建一个统一的接口。无论后端服务如何变化，对主服务来说，调用方式都是一致的。
 
 *   **`src/provider-strategies.js`**: 🎯 **提供商策略模式**
-    *   我们为每种 API 协议（如 OpenAI、Gemini、Claude）都定义了一套策略。这套策略精确地处理了该协议下的请求解析、响应格式化、模型名称提取等所有细节，确保了协议之间的完美转换。
+    *   我们为每种 API 协议（如 OpenAI、Gemini）都定义了一套策略。这套策略精确地处理了该协议下的请求解析、响应格式化、模型名称提取等所有细节，确保了协议之间的完美转换。
 
 *   **`src/convert.js`**: 🔄 **格式转换中心**
     *   这是实现“万物皆可 OpenAI”魔法的核心。它负责在不同的 API 协议格式之间进行精确、无损的数据转换。
@@ -50,8 +49,8 @@
 *   **`src/common.js`**: 🛠️ **通用工具库**
     *   存放着项目共享的常量、工具函数和通用处理器，让代码更加整洁和高效。
 
-*   **`src/gemini/`, `src/openai/`, `src/claude/`**: 📦 **提供商实现目录**
-    *   每个目录都包含了对应服务商的核心逻辑、API 调用和策略实现，结构清晰，便于您未来添加更多新的服务商。其中 `src/openai/openai-kiro.js` 提供了 Kiro API 的特殊实现。
+*   **`src/gemini/`, `src/openai/`**: 📦 **提供商实现目录**
+    *   每个目录都包含了对应服务商的核心逻辑、API 调用和策略实现，结构清晰，便于您未来添加更多新的服务商。
 
 *   **`tests/`**: 🧪 **测试目录**
     *   包含完整的集成测试套件，覆盖所有API端点、认证方式和错误处理场景，确保项目的稳定性和可靠性。
@@ -61,7 +60,6 @@
 ### ⚠️ 目前的局限
 
 *   原版 Gemini CLI 的内置命令功能不可用。配合其他客户端的mcp能力可实现相同效果。
-*   使用Kiro API 需要下载kiro客户端，并使用授权登录生成kiro-auth-token.json。[下载kiro客户端](https://aibook.ren/archives/kiro-install)。
 *   多模态能力（如图片输入）尚在开发计划中 (TODO)。
 
 ---
@@ -112,8 +110,6 @@
     "MODEL_PROVIDER": "gemini-cli-oauth",
     "OPENAI_API_KEY": "sk-your-openai-key",
     "OPENAI_BASE_URL": "https://api.openai.com/v1",
-    "CLAUDE_API_KEY": "sk-ant-your-claude-key",
-    "CLAUDE_BASE_URL": "https://api.anthropic.com/v1",
     "PROJECT_ID": "your-gcp-project-id",
     "PROMPT_LOG_MODE": "console"
 }
@@ -128,13 +124,9 @@
 | `REQUIRED_API_KEY`              | string  | 用于保护您的 API 服务的密钥。客户端在请求时必须提供此密钥。                                                                     | 任意字符串, 默认为 `"123456"`                                                                             |
 | `SERVER_PORT`                   | number  | 服务器监听的端口号。                                                                                                            | 任意有效端口号, 默认为 `3000`                                                                             |
 | `HOST`                          | string  | 服务器监听的主机地址。`localhost` 只允许本机访问，`0.0.0.0` 允许局域网或公网访问。                                                | 默认为 `"localhost"`                                                                                      |
-| `MODEL_PROVIDER`                | string  | 指定后端使用的模型服务商。这是核心配置，决定了 API 请求将转发给哪个平台。                                                         | 可选值: `"gemini-cli-oauth"`, `"openai-custom"`, `"claude-custom"`, `"openai-kiro-oauth"`                  |
+| `MODEL_PROVIDER`                | string  | 指定后端使用的模型服务商。这是核心配置，决定了 API 请求将转发给哪个平台。                                                         | 可选值: `"gemini-cli-oauth"`, `"openai-custom"`                  |
 | `OPENAI_API_KEY`                | string  | 当 `MODEL_PROVIDER` 为 `openai-custom` 时，需要提供您的 OpenAI API 密钥。                                                         | `null`                                                                                                    |
 | `OPENAI_BASE_URL`               | string  | 当 `MODEL_PROVIDER` 为 `openai-custom` 时，可以指定 OpenAI 兼容的 API 地址。                                                      | 默认为 `"https://api.openai.com/v1"`                                                                      |
-| `CLAUDE_API_KEY`                | string  | 当 `MODEL_PROVIDER` 为 `claude-custom` 时，需要提供您的 Claude API 密钥。                                                         | `null`                                                                                                    |
-| `CLAUDE_BASE_URL`               | string  | 当 `MODEL_PROVIDER` 为 `claude-custom` 时，可以指定 Claude 兼容的 API 地址。                                                      | 默认为 `"https://api.anthropic.com/v1"`                                                                   |
-| `KIRO_OAUTH_CREDS_BASE64`       | string  | (Kiro API 模式) 您的 Kiro OAuth 凭据的 Base64 编码字符串。                                                                      | `null`                                                                                                    |
-| `KIRO_OAUTH_CREDS_FILE_PATH`    | string  | (Kiro API 模式) 您的 Kiro OAuth 凭据 JSON 文件的路径。                                                                          | `null`                                                                                                    |
 | `GEMINI_OAUTH_CREDS_BASE64`     | string  | (Gemini-CLI 模式) 您的 Google OAuth 凭据的 Base64 编码字符串。                                                                  | `null`                                                                                                    |
 | `GEMINI_OAUTH_CREDS_FILE_PATH`  | string  | (Gemini-CLI 模式) 您的 Google OAuth 凭据 JSON 文件的路径。                                                                      | `null`                                                                                                    |
 | `PROJECT_ID`                    | string  | (Gemini-CLI 模式) 您的 Google Cloud 项目 ID。                                                                                   | `null`                                                                                                    |
@@ -156,14 +148,6 @@
         ```bash
         node src/api-server.js --model-provider openai-custom --openai-api-key sk-xxx
         ```
-    *   **启动 Claude 代理**:
-        ```bash
-        node src/api-server.js --model-provider claude-custom --claude-api-key sk-ant-xxx
-        ```
-    *   **启动 Kiro API 代理**:
-        ```bash
-        node src/api-server.js --model-provider openai-kiro-oauth
-        ```
     *   **监听所有网络接口并指定端口和Key** (用于 Docker 或局域网访问)
         ```bash
         node src/api-server.js --host 0.0.0.0 --port 8000 --api-key your_secret_key
@@ -175,7 +159,7 @@
 
 ### 4. 调用 API
 
-> **提示**: 如果您在无法直接访问 Google/OpenAI/Claude/Kiro 服务的环境中使用，请先为您的终端设置全局 HTTP/HTTPS 代理。
+> **提示**: 如果您在无法直接访问 Google/OpenAI 服务的环境中使用，请先为您的终端设置全局 HTTP/HTTPS 代理。
 
 所有请求都使用标准的 OpenAI 格式。
 
@@ -203,7 +187,7 @@
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer 123456" \
       -d '{
-        "model": "claude-3-opus-20240229",
+        "model": "gpt-4",
         "messages": [
           {"role": "user", "content": "写一首关于宇宙的五行短诗"}
         ],

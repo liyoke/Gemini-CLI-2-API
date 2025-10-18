@@ -21,8 +21,6 @@ const MODEL_PROVIDER = {
   // Model provider constants
   GEMINI_CLI: "gemini-cli-oauth",
   OPENAI_CUSTOM: "openai-custom",
-  CLAUDE_CUSTOM: "claude-custom",
-  KIRO_API: "openai-kiro-oauth",
 };
 
 // Real test data for different API formats
@@ -54,17 +52,6 @@ const REAL_TEST_DATA = {
           parts: [{ text: "Hello, what is 2+2?" }],
         },
       ],
-    },
-  },
-  claude: {
-    nonStreamRequest: {
-      model: "claude-4-sonnet",
-      messages: [{ role: "user", content: "Hello, what is 2+2?" }],
-    },
-    streamRequest: {
-      model: "claude-4-sonnet",
-      messages: [{ role: "user", content: "Hello, what is 2+2?" }],
-      stream: true,
     },
   },
 };
@@ -222,141 +209,6 @@ describe("API Integration Tests with HTTP Requests", () => {
 
       expect(chunks.length).toBeGreaterThan(0);
     });
-
-    // To run this test:
-    // npx jest GeminiCli2API/tests/api-integration.test.js -t "OpenAI /v1/chat/completions non-streaming with Claude provider"
-    test("OpenAI /v1/chat/completions non-streaming with Claude provider", async () => {
-      REAL_TEST_DATA.openai.nonStreamRequest.model = "claude-4-sonnet";
-      const response = await makeRequest(
-        `${TEST_SERVER_BASE_URL}/v1/chat/completions`,
-        "POST",
-        "bearer",
-        { "model-provider": MODEL_PROVIDER.CLAUDE_CUSTOM },
-        REAL_TEST_DATA.claude.nonStreamRequest,
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.headers.get("content-type")).toContain(
-        "application/json",
-      );
-
-      const responseData = await response.json();
-      expect(responseData).toHaveProperty("choices");
-      expect(Array.isArray(responseData.choices)).toBe(true);
-      expect(responseData.choices.length).toBeGreaterThan(0);
-      expect(responseData.choices[0]).toHaveProperty("message");
-      expect(responseData.choices[0].message).toHaveProperty("content");
-    });
-
-    // To run this test:
-    // npx jest GeminiCli2API/tests/api-integration.test.js -t "OpenAI /v1/chat/completions streaming with Claude provider"
-    test("OpenAI /v1/chat/completions streaming with Claude provider", async () => {
-      REAL_TEST_DATA.openai.nonStreamRequest.model = "claude-4-sonnet";
-      const response = await makeRequest(
-        `${TEST_SERVER_BASE_URL}/v1/chat/completions`,
-        "POST",
-        "bearer",
-        { "model-provider": MODEL_PROVIDER.CLAUDE_CUSTOM },
-        REAL_TEST_DATA.claude.streamRequest,
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.headers.get("content-type")).toContain(
-        "text/event-stream",
-      );
-      expect(response.headers.get("cache-control")).toBe("no-cache");
-      expect(response.headers.get("connection")).toBe("keep-alive");
-
-      // Read some of the streaming response
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let chunks = [];
-      let chunkCount = 0;
-
-      try {
-        while (chunkCount < 3) {
-          // Read first few chunks
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          chunks.push(chunk);
-          chunkCount++;
-        }
-      } finally {
-        reader.releaseLock();
-      }
-
-      expect(chunks.length).toBeGreaterThan(0);
-    });
-  });
-
-  // To run all Claude Native Endpoints tests:
-  // npx jest GeminiCli2API/tests/api-integration.test.js -t "Claude Native Endpoints"
-  describe("Claude Native Endpoints", () => {
-    // To run this test:
-    // npx jest GeminiCli2API/tests/api-integration.test.js -t "Claude /v1/messages non-streaming"
-    test("Claude /v1/messages non-streaming", async () => {
-      const response = await makeRequest(
-        `${TEST_SERVER_BASE_URL}/v1/messages`,
-        "POST",
-        "anthropic",
-        { "model-provider": MODEL_PROVIDER.CLAUDE_CUSTOM },
-        REAL_TEST_DATA.claude.nonStreamRequest,
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.headers.get("content-type")).toContain(
-        "application/json",
-      );
-
-      const responseData = await response.json();
-      expect(responseData).toHaveProperty("content");
-      expect(Array.isArray(responseData.content)).toBe(true);
-      expect(responseData.content.length).toBeGreaterThan(0);
-      expect(responseData.content[0]).toHaveProperty("text");
-    });
-
-    // To run this test:
-    // npx jest GeminiCli2API/tests/api-integration.test.js -t "Claude /v1/messages streaming"
-    test("Claude /v1/messages streaming", async () => {
-      const response = await makeRequest(
-        `${TEST_SERVER_BASE_URL}/v1/messages`,
-        "POST",
-        "anthropic",
-        { "model-provider": MODEL_PROVIDER.CLAUDE_CUSTOM },
-        REAL_TEST_DATA.claude.streamRequest,
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.headers.get("content-type")).toContain(
-        "text/event-stream",
-      );
-      expect(response.headers.get("cache-control")).toBe("no-cache");
-      expect(response.headers.get("connection")).toBe("keep-alive");
-
-      // Read some of the streaming response
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let chunks = [];
-      let chunkCount = 0;
-
-      try {
-        while (chunkCount < 3) {
-          // Read first few chunks
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          chunks.push(chunk);
-          chunkCount++;
-        }
-      } finally {
-        reader.releaseLock();
-      }
-
-      expect(chunks.length).toBeGreaterThan(0);
-    });
   });
 
   // To run all Gemini Native Endpoints tests:
@@ -467,25 +319,6 @@ describe("API Integration Tests with HTTP Requests", () => {
       expect(Array.isArray(responseData.data)).toBe(true);
     });
 
-    // npx jest GeminiCli2API/tests/api-integration.test.js -t "OpenAI /v1/models Claude"
-    test("OpenAI /v1/models Claude", async () => {
-      const response = await makeRequest(
-        `${TEST_SERVER_BASE_URL}/v1/models`,
-        "GET",
-        "bearer",
-        { "model-provider": MODEL_PROVIDER.CLAUDE_CUSTOM },
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.headers.get("content-type")).toContain(
-        "application/json",
-      );
-
-      const responseData = await response.json();
-      expect(responseData).toHaveProperty("data");
-      expect(Array.isArray(responseData.data)).toBe(true);
-    });
-
     // To run this test:
     // npx jest GeminiCli2API/tests/api-integration.test.js -t "Gemini /v1beta/models modelList"
     test("Gemini /v1beta/models modelList", async () => {
@@ -568,21 +401,6 @@ describe("API Integration Tests with HTTP Requests", () => {
         `${TEST_SERVER_BASE_URL}/v1/models`,
         "GET",
         "goog",
-      );
-
-      expect(response.status).toBe(200);
-      expect(response.headers.get("content-type")).toContain(
-        "application/json",
-      );
-    });
-
-    // To run this test:
-    // npx jest GeminiCli2API/tests/api-integration.test.js -t "Accept x-api-key authentication for Claude"
-    test("Accept x-api-key authentication for Claude", async () => {
-      const response = await makeRequest(
-        `${TEST_SERVER_BASE_URL}/v1/models`,
-        "GET",
-        "anthropic",
       );
 
       expect(response.status).toBe(200);
@@ -677,8 +495,6 @@ async function makeRequest(
     headers["Authorization"] = `Bearer ${TEST_API_KEY}`;
   } else if (authType === "goog") {
     headers["x-goog-api-key"] = TEST_API_KEY;
-  } else if (authType === "anthropic") {
-    headers["x-api-key"] = TEST_API_KEY;
   } else if (authType === "query") {
     url = `${url}?key=${TEST_API_KEY}`;
   }

@@ -43,7 +43,9 @@ export class GeminiApiService {
       const customTokenEndpoint = `${oauthTokenUrl}/token`;
       // 只修改 oauth2TokenUrl，保留其他默认端点
       this.authClient.endpoints.oauth2TokenUrl = customTokenEndpoint;
-      console.log(`[Gemini Auth] OAuth2Client configured with custom token endpoint: ${customTokenEndpoint}`);
+      console.log(
+        `[Gemini Auth] OAuth2Client configured with custom token endpoint: ${customTokenEndpoint}`,
+      );
     }
 
     this.availableModels = [];
@@ -470,6 +472,22 @@ export class GeminiApiService {
       }
       yield* this.parseSSEStream(res.data);
     } catch (error) {
+      // Handle AbortError specifically (timeout/abort)
+      if (error.name === "AbortError" || error.code === "ABORT_ERR") {
+        if (retryCount < maxRetries) {
+          const delay = baseDelay * Math.pow(2, retryCount);
+          console.log(
+            `[API] Stream was aborted (${error.name}). Retrying in ${delay}ms... (attempt ${retryCount + 1}/${maxRetries})`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          yield* this.streamApi(method, body, isRetry, retryCount + 1);
+          return;
+        }
+        throw new Error(
+          `Stream aborted: Request timed out or was cancelled after ${maxRetries} attempts.`,
+        );
+      }
+
       // Handle network timeout errors specifically
       if (
         error.code === "ETIMEDOUT" ||
@@ -546,20 +564,45 @@ export class GeminiApiService {
   async *parseSSEStream(stream) {
     const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
     let buffer = [];
-    for await (const line of rl) {
-      if (line.startsWith("data: ")) buffer.push(line.slice(6));
-      else if (line === "" && buffer.length > 0) {
-        try {
-          yield JSON.parse(buffer.join("\n"));
-        } catch (e) {
-          console.error(
-            "[Stream] Failed to parse JSON chunk:",
-            buffer.join("\n"),
-          );
-        }
-        buffer = [];
+
+    // Handle errors on the readline interface
+    rl.on("error", (error) => {
+      if (error.name === "AbortError" || error.code === "ABORT_ERR") {
+        console.log("[Stream] Stream was aborted (likely due to timeout)");
+      } else {
+        console.error("[Stream] Readline error:", error.message);
       }
+    });
+
+    try {
+      for await (const line of rl) {
+        if (line.startsWith("data: ")) buffer.push(line.slice(6));
+        else if (line === "" && buffer.length > 0) {
+          try {
+            yield JSON.parse(buffer.join("\n"));
+          } catch (e) {
+            console.error(
+              "[Stream] Failed to parse JSON chunk:",
+              buffer.join("\n"),
+            );
+          }
+          buffer = [];
+        }
+      }
+    } catch (error) {
+      if (error.name === "AbortError" || error.code === "ABORT_ERR") {
+        console.log(
+          "[Stream] Stream parsing was aborted (likely due to timeout)",
+        );
+      } else {
+        console.error("[Stream] Stream parsing error:", error.message);
+        throw error;
+      }
+    } finally {
+      rl.close();
     }
+
+    // Process any remaining buffer
     if (buffer.length > 0) {
       try {
         yield JSON.parse(buffer.join("\n"));
